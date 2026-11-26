@@ -36,7 +36,7 @@
 | 步骤 4 | [make_zh_patch.py](make_zh_patch.py) | 解析 APK 中 `libgame.so` 清单，注入本土化文本至 `work/localized_texts/en` 与 `work/text_decoded/*.ndjson` |
 | 步骤 5 | [sync_sd_cpk.py](sync_sd_cpk.py) | 同步 `zh/sd` 本土化 UI 图片及从对应 CPK 提取替换 `cpk_extract/en` 预解包素材 |
 | 步骤 6 | [patch_event_cpk.py](patch_event_cpk.py) | 遍历 `common_lang`（SD/HD）全目录，对剧情与城镇对话 CPK 进行精准替换重打包 |
-| 步骤 7 | [patch_extras.py](patch_extras.py) | 额外资源本土化（`game-assets.apk`、54 个铁城 HTML、礼包名、怪兽名、敌人技能）与战斗/任务倍率调整 |
+| 步骤 7 | [patch_extras.py](patch_extras.py) | 额外资源本土化（`game-assets.apk`、54 个武具 HTML、礼包名、怪兽名、敌人技能）与战斗/任务倍率调整 |
 | 步骤 8 | [repack_all_clean.py](repack_all_clean.py) | 合并底包与 `work/` 生成去重分包 `data_*.zip` 与 `latest.json` |
 | 步骤 9 | [export_names_json.py](export_names_json.py) | 导出兵员/装备/道具/能力本土化名称至 `save_editor_web/names.json` |
 | 选项 `a` | [patch_apk.py](patch_apk.py) | 调用 `apktool` + `uber-apk-signer` 注入纯离线与存储权限补丁并用固定密钥库签名 |

@@ -45,7 +45,7 @@ FFBE_localization/
 
 3. **额外本土化与游玩倍率调整（[patch_extras.py](scripts/patch_extras.py)）**
    - 补全 `static/client/game-assets.apk` 内 `0ThfQQWd.csv` 与 `resources_pretutorial.cpk`。
-   - 本土化 `native/exvius/equipment-enhancement/*.html` 共 54 个铁城装备强化说明及奖励网页。
+   - 本土化 `native/exvius/equipment-enhancement/*.html` 共 54 个武具装备强化说明及奖励网页。
    - 补全礼包名称、怪兽名称（`F_TEXT_MONSTER_NAME`）与敌人技能名（`F_MONSTER_SKILL_MST`）。
    - 支持自定义倍率（**`build_all.ps1` 与 `patch_extras.py` 默认均为 10 倍，原版填 `1`**）：
      - 战斗掉落概率倍率（上限 `100%`）
@@ -143,7 +143,7 @@ cd d:\下载\FFBE_localization\scripts
    - 在 `_extract_sg_rows()` 与 `_swap_sg_text()` 中，将当前写死的列号 `parts[2]` 改为目标语言对应的列索引，并替换 `is_zh()` 校验逻辑即可。
 4. **额外资源与网页模板（[patch_extras.py](scripts/patch_extras.py)）**
    - 将 `patch_game_assets_apk()` 中的 `assets/localized_texts/zh/0ThfQQWd.csv` 与 `assets/cpk/zh/sd/resources/resources_pretutorial.cpk` 改为目标语言路径，并替换该文件内的 `_CJK_RE.search(...)` 校验。
-   - `patch_equipment_enhancement()` 中 54 个铁城装备强化网页的静态模板（`_EXACT_HTML_PHRASES`、`_STATIC_REWARDS`、`_MONTH_ZH`、`_STAT_WORDS` 及 `<html lang="zh-Hant">`）当前为繁中硬编码，移植时需翻译为目标语言或选择跳过 HTML 替换。
+   - `patch_equipment_enhancement()` 中 54 个武具装备强化网页的静态模板（`_EXACT_HTML_PHRASES`、`_STATIC_REWARDS`、`_MONTH_ZH`、`_STAT_WORDS` 及 `<html lang="zh-Hant">`）当前为繁中硬编码，移植时需翻译为目标语言或选择跳过 HTML 替换。
 5. **可选附属项**：[stat_zh_coverage.py](scripts/stat_zh_coverage.py) 的 `TABLE_META` 分类说明、[save_editor_web/index.html](save_editor_web/index.html) 网页界面，以及 [patch_apk.py](scripts/patch_apk.py) 输出文件名后缀 `-zh-patched.apk` 可按需本地化。
 
 ### 2. 移植国际服未收录语种 / 日服（`ffbe_jp_contentserver_archive.rar`）

@@ -4,7 +4,7 @@
    将包内自带的 assets/localized_texts/zh/0ThfQQWd.csv（对调繁中列）与
    assets/cpk/zh/sd/resources/resources_pretutorial.cpk 覆盖到对应 en/ 路径。
 2. native/exvius/equipment-enhancement/*.html：
-   基于 work/localized_texts/en 繁中词库（兼容明文与加密 .dat）+ 审阅确认模板汉化 54 个铁城装备强化说明与奖励网页。
+   基于 work/localized_texts/en 繁中词库（兼容明文与加密 .dat）+ 审阅确认模板汉化 54 个武具装备强化说明与奖励网页。
 """
 import argparse
 import html
