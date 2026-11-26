@@ -2,7 +2,7 @@
 
 [中文说明](README.md) | **English**
 
-This project localizes the official **FFBE Offline (`exvius-offline`)** English text, system UI, story and town dialogues, enemy skills, Equipment Enhancement (Item World) HTML guides, and optional gameplay reward multipliers using the archived Global CDN assets (`ffbe_gl_contentserver_archive.rar`), producing a **100% offline, zero-network** APK and deduplicated data packs (configured for Traditional Chinese `zh` by default; see [Porting to Other Languages](#porting-to-other-languages) for other languages).
+This project localizes the **FFBE Offline (`exvius-offline`)** English text, system UI, story and town dialogues, enemy skills, Equipment Enhancement (Item World) HTML guides, and optional gameplay reward multipliers using the archived Global CDN assets (`ffbe_gl_contentserver_archive.rar`), producing a **100% offline, zero-network** APK and deduplicated data packs (configured for Traditional Chinese `zh` by default; see [Porting to Other Languages](#porting-to-other-languages) for other languages).
 
 ---
 
