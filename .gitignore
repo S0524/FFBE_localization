@@ -1,0 +1,28 @@
+# 官方底包、档案、产物与中间目录（仅保留空目录占位）
+release/*
+!release/.gitkeep
+
+release_repack/
+
+source/*
+!source/.gitkeep
+!source/apk/
+source/apk/*
+!source/apk/.gitkeep
+
+work/
+
+# 私有签名密钥（切勿上传）
+*.keystore
+*.jks
+
+# Python 与临时文件
+__pycache__/
+*.py[cod]
+*.tmp
+*.part
+*.bak
+
+# 系统文件
+.DS_Store
+Thumbs.db

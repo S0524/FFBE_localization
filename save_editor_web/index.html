@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FFBE 离线版存档修改器</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #12151c;
+    --panel: #1b202b;
+    --panel-alt: #232a38;
+    --border: #2e3748;
+    --text: #e6ebf5;
+    --muted: #8b97ad;
+    --accent: #4c8bf5;
+    --accent-hover: #3b78e7;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    padding-bottom: 44px;
+  }
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .brand { font-weight: 700; font-size: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--panel-alt);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge.ok { color: var(--green); border-color: rgba(63,185,80,.4); }
+  .badge.warn { color: var(--amber); border-color: rgba(210,153,34,.4); }
+  .badge.blue { color: #79c0ff; border-color: rgba(76,139,245,.4); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, .btn {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: .15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  button:hover, .btn:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { background: var(--accent-hover); }
+  .btn.green { background: #1f6f3b; border-color: #2ea043; color: #fff; font-weight: 600; }
+  button.danger { color: var(--red); }
+  button.danger:hover { border-color: var(--red); background: rgba(248,81,73,.1); }
+  button.sm { padding: 3px 8px; font-size: 12px; }
+  input[type="text"], input[type="number"], select, textarea {
+    background: #101319;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  .container { max-width: 1160px; margin: 0 auto; padding: 16px; }
+  .dropzone {
+    display: block;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 44px 20px;
+    text-align: center;
+    background: var(--panel);
+    margin: 24px 0;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: rgba(76,139,245,.08); }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 9px 15px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card h3 { margin: 0 0 10px 0; font-size: 15px; }
+  .grid-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; color: var(--muted); }
+  .quick-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .table-wrap { overflow-x: auto; max-height: 62vh; border: 1px solid var(--border); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { background: var(--panel-alt); position: sticky; top: 0; z-index: 5; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tr:hover td { background: rgba(255,255,255,.025); }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .status-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    z-index: 20;
+  }
+  .hidden { display: none !important; }
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.68);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50; padding: 16px;
+  }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%; max-width: 520px;
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 12px 0; font-size: 16px; }
+  .search-hits {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 8px 0 12px 0;
+    background: #101319;
+  }
+  .hit-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .hit-item:hover { background: var(--panel-alt); }
+  .hit-item:last-child { border-bottom: none; }
+  .picked-banner {
+    background: rgba(63,185,80,.12);
+    border: 1px solid rgba(63,185,80,.4);
+    color: #9be9a8;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .muted { color: var(--muted); font-size: 12px; }
+  details.advanced {
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,.18);
+  }
+  details.advanced summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    user-select: none;
+  }
+  details.advanced .grid-form { margin-top: 10px; }
+
+  /* 手机端自适应卡片布局 */
+  @media (max-width: 680px) {
+    header { padding: 10px 12px; gap: 8px; }
+    .brand { font-size: 15px; width: 100%; justify-content: space-between; }
+    .toolbar { width: 100%; }
+    .toolbar button, .toolbar .btn { flex: 1; justify-content: center; padding: 7px 10px; }
+    .container { padding: 10px; }
+    .card { padding: 12px; }
+    .filter-bar input[type="text"] { width: 100% !important; }
+    .table-wrap { max-height: 65vh; }
+
+    thead { display: none; }
+    table, tbody { display: block; width: 100%; }
+    td { border: none; padding: 0; }
+
+    #itemsBody tr {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    #itemsBody td:nth-child(1) { grid-column: 1; grid-row: 1; }
+    #itemsBody td:nth-child(2) { grid-column: 3; grid-row: 1; justify-self: end; font-size: 12px; }
+    #itemsBody td:nth-child(3) { grid-column: 2; grid-row: 1; font-weight: 600; font-size: 14px; }
+    #itemsBody td:nth-child(4) { grid-column: 1 / 3; grid-row: 2; }
+    #itemsBody td:nth-child(4) input { width: 100% !important; max-width: 180px; }
+    #itemsBody td:nth-child(5) { grid-column: 3; grid-row: 2; justify-self: end; }
+
+    #rosterBody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    #rosterBody td:nth-child(1) { flex-basis: 100%; font-weight: 600; font-size: 14px; }
+    #rosterBody td:last-child { margin-left: auto; }
+
+    .status-bar { padding: 6px 12px; }
+    #statusText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #fileMeta { white-space: nowrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>FFBE 离线版存档修改器</span>
+    <span id="dictBadge" class="badge warn">正在加载图鉴...</span>
+    <span id="dirtyBadge" class="badge warn hidden">● 有未保存的修改</span>
+  </div>
+  <div class="toolbar">
+    <input type="file" id="saveFileInput" accept=".zip,.json" class="hidden">
+    <input type="file" id="dictFileInput" accept=".json" class="hidden">
+    <button onclick="document.getElementById('saveFileInput').click()">打开存档</button>
+    <button id="manualDictBtn" class="hidden" onclick="document.getElementById('dictFileInput').click()">导入中文图鉴</button>
+    <button id="exportBtn" class="primary hidden" onclick="exportSave()">保存并导出存档</button>
+    <a id="fallbackLink" class="btn green hidden" href="#">未自动下载？点此保存</a>
+  </div>
+</header>
+
+<div class="container">
+  <label for="saveFileInput" id="dropzone" class="dropzone">
+    <h2 style="margin:0 0 8px 0; font-size:18px;">点击选择或拖入游戏导出的存档文件</h2>
+    <p class="muted" style="margin:0;">
+      纯本地浏览器运行，存档不会上传至任何服务器。<br>
+      支持游戏内直接导出的存档压缩包（自动完成校验修复，导出后可直接导回游戏）。
+    </p>
+  </label>
+
+  <div id="editorArea" class="hidden">
+    <div class="tabs">
+      <div class="tab active" data-tab="currencies" onclick="switchTab('currencies')">货币与等级</div>
+      <div class="tab" data-tab="bank" onclick="switchTab('bank')">兵员强化池</div>
+      <div class="tab" data-tab="items" onclick="switchTab('items')">道具与装备</div>
+      <div class="tab" data-tab="roster" onclick="switchTab('roster')">兵员列表</div>
+      <div class="tab" data-tab="raw" onclick="switchTab('raw')">高级数据</div>
+    </div>
+
+    <!-- 1. 货币与等级 -->
+    <div id="tab-currencies" class="tab-panel">
+      <div class="card">
+        <h3>基础货币</h3>
+        <div class="grid-form" id="curGrid"></div>
+        <div class="quick-bar">
+          <button class="primary" onclick="quickSetAllCur(99999999)">全部设为 99,999,999</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>玩家等级与体力</h3>
+        <div class="grid-form" id="rankGrid"></div>
+      </div>
+    </div>
+
+    <!-- 2. 兵员强化池 -->
+    <div id="tab-bank" class="tab-panel hidden">
+      <div class="card">
+        <h3>强化兵员・通用持有素材</h3>
+        <p class="muted" style="margin:-4px 0 14px 0;">
+          对应游戏内「强化兵员」界面中不带「固定」标记的通用持有素材（EXP、LB 熟练度、各属性强化罐与六种门）。
+        </p>
+        <div class="grid-form" id="bankGrid"></div>
+        <div class="quick-bar">
+          <button class="primary" onclick="quickSetBank(99999999)">全部设为 99,999,999</button>
+          <button class="danger" onclick="quickSetBank(0)">全部归零</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 道具与装备 -->
+    <div id="tab-items" class="tab-panel hidden">
+      <div class="card">
+        <div class="filter-bar">
+          <input type="text" id="filterItems" placeholder="搜索道具、能力、装备名称或 ID..." style="width:260px;" oninput="renderItems()">
+          <button class="primary" onclick="openAddItemModal()">+ 添加道具 / 装备</button>
+          <span id="itemsCount" class="muted"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:76px;">分类</th>
+                <th style="width:120px;">ID</th>
+                <th>名称</th>
+                <th style="width:140px;">持有数量</th>
+                <th style="width:68px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 兵员列表 -->
+    <div id="tab-roster" class="tab-panel hidden">
+      <div class="card">
+        <div class="filter-bar">
+          <input type="text" id="filterRoster" placeholder="搜索兵员名称或 ID..." style="width:260px;" oninput="renderRoster()">
+          <button class="primary" onclick="openAddUnitModal()">+ 新增兵员</button>
+          <span id="rosterCount" class="muted"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>兵员名称</th>
+                <th style="width:120px;">ID</th>
+                <th style="width:80px;">等级</th>
+                <th style="width:110px;">当前经验</th>
+                <th style="width:90px;">极限技</th>
+                <th style="width:80px;">EX 觉醒</th>
+                <th style="width:120px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="rosterBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 高级数据 -->
+    <div id="tab-raw" class="tab-panel hidden">
+      <div class="card">
+        <div class="filter-bar">
+          <button class="primary" onclick="applyRawJson()">应用修改</button>
+          <button onclick="refreshRawJson()">重新读取</button>
+          <span class="muted">仅供进阶玩家直接编辑底层存档数据，普通玩家无需操作。</span>
+        </div>
+        <textarea id="rawTextarea" style="width:100%; height:56vh; font-family:Consolas,monospace; font-size:12px;"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：添加道具/能力/装备 -->
+<div id="modalAddItem" class="modal-bg hidden">
+  <div class="modal">
+    <h3>添加道具 / 能力 / 装备</h3>
+    <div class="field">
+      <label>第 1 步：输入名称或 ID 搜索，点击下方结果选中</label>
+      <input type="text" id="addItemSearch" placeholder="例如：召喚券、聖劍、101000100..." oninput="searchItemDict()">
+    </div>
+    <div id="addItemHits" class="search-hits hidden"></div>
+    <div id="pickedItemBanner" class="picked-banner hidden"></div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>第 2 步：填写要添加的数量</label>
+      <input type="number" id="addItemCount" value="1" min="1">
+    </div>
+    <div class="quick-bar" style="margin-top:8px;">
+      <button class="sm" onclick="setAddItemCount(1)">× 1</button>
+      <button class="sm" onclick="setAddItemCount(10)">× 10</button>
+      <button class="sm" onclick="setAddItemCount(99)">× 99</button>
+      <button class="sm" onclick="setAddItemCount(999)">× 999</button>
+    </div>
+
+    <details class="advanced">
+      <summary>高级选项（系统已自动识别，一般无需修改）</summary>
+      <div class="grid-form" style="grid-template-columns:1fr 1fr;">
+        <div class="field">
+          <label>背包分类</label>
+          <select id="addItemSection">
+            <option value="0">道具 / 能力</option>
+            <option value="1">装备</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>子类型编号</label>
+          <input type="number" id="addItemType" value="20" oninput="addItemTypeManual = true;">
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>物品编号</label>
+          <input type="number" id="addItemId" placeholder="选中搜索结果后自动填入">
+        </div>
+      </div>
+    </details>
+
+    <div class="quick-bar" style="justify-content:flex-end; margin-top:18px;">
+      <button onclick="closeModal('modalAddItem')">取消</button>
+      <button class="primary" onclick="submitAddItem()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：新增兵员 -->
+<div id="modalAddUnit" class="modal-bg hidden">
+  <div class="modal">
+    <h3>新增兵员</h3>
+    <div class="field">
+      <label>第 1 步：输入兵员名称或 ID 搜索，点击下方结果选中</label>
+      <input type="text" id="addUnitSearch" placeholder="例如：拉斯韋爾、克勞德、906000105..." oninput="searchUnitDict()">
+    </div>
+    <div id="addUnitHits" class="search-hits hidden"></div>
+    <div id="pickedUnitBanner" class="picked-banner hidden"></div>
+
+    <div class="grid-form" style="grid-template-columns:1fr 1fr; margin-top:10px;">
+      <div class="field">
+        <label>初始等级</label>
+        <input type="number" id="addUnitLevel" value="1" min="1">
+      </div>
+      <div class="field" style="justify-content:flex-end;">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--text); padding-bottom:6px;">
+          <input type="checkbox" id="addUnitFav" checked> 设为最爱（防误分解）
+        </label>
+      </div>
+    </div>
+
+    <details class="advanced">
+      <summary>高级选项（手动指定兵员编号与初始经验）</summary>
+      <div class="grid-form" style="grid-template-columns:1fr 1fr;">
+        <div class="field">
+          <label>兵员编号</label>
+          <input type="number" id="addUnitMaster" placeholder="选中搜索结果后自动填入">
+        </div>
+        <div class="field">
+          <label>初始经验</label>
+          <input type="number" id="addUnitExp" value="0" min="0">
+        </div>
+      </div>
+    </details>
+
+    <div class="quick-bar" style="justify-content:flex-end; margin-top:18px;">
+      <button onclick="closeModal('modalAddUnit')">取消</button>
+      <button class="primary" onclick="submitAddUnit()">确认新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：修改兵员 -->
+<div id="modalEditUnit" class="modal-bg hidden">
+  <div class="modal">
+    <h3 id="editUnitTitle">修改兵员</h3>
+    <input type="hidden" id="editUnitIdx">
+    <div class="grid-form" style="grid-template-columns:1fr 1fr;">
+      <div class="field"><label>等级</label><input type="number" id="editUnitLevel" min="1"></div>
+      <div class="field"><label>当前经验</label><input type="number" id="editUnitExp" min="0"></div>
+      <div class="field"><label>极限技等级</label><input type="number" id="editUnitLbLv" min="1"></div>
+      <div class="field"><label>极限技经验</label><input type="number" id="editUnitLbExp" min="0"></div>
+      <div class="field"><label>EX 觉醒等级（0~3）</label><input type="number" id="editUnitExLv" min="0" max="3"></div>
+    </div>
+    <div class="quick-bar" style="justify-content:flex-end; margin-top:18px;">
+      <button onclick="closeModal('modalEditUnit')">取消</button>
+      <button class="primary" onclick="submitEditUnit()">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span id="statusText">就绪：请点击或拖入游戏导出的存档文件</span>
+  <span id="fileMeta"></span>
+</div>
+
+<script>
+// 纯 JS SHA-256（兼容所有浏览器与离线环境）
+function sha256Hex(bytes) {
+  const K = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ]);
+  let H = new Uint32Array([
+    0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,
+    0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19
+  ]);
+  const bitLen = bytes.length * 8;
+  const paddedLen = Math.ceil((bytes.length + 9) / 64) * 64;
+  const buf = new Uint8Array(paddedLen);
+  buf.set(bytes);
+  buf[bytes.length] = 0x80;
+  const view = new DataView(buf.buffer);
+  view.setUint32(paddedLen - 8, Math.floor(bitLen / 0x100000000), false);
+  view.setUint32(paddedLen - 4, bitLen >>> 0, false);
+
+  const W = new Uint32Array(64);
+  const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+
+  for (let off = 0; off < paddedLen; off += 64) {
+    for (let i = 0; i < 16; i++) W[i] = view.getUint32(off + i * 4, false);
+    for (let i = 16; i < 64; i++) {
+      const s0 = rotr(W[i-15], 7) ^ rotr(W[i-15], 18) ^ (W[i-15] >>> 3);
+      const s1 = rotr(W[i-2], 17) ^ rotr(W[i-2], 19) ^ (W[i-2] >>> 10);
+      W[i] = (W[i-16] + s0 + W[i-7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+      const ch = (e & f) ^ (~e & g);
+      const temp1 = (h + S1 + ch + K[i] + W[i]) >>> 0;
+      const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const temp2 = (S0 + maj) >>> 0;
+      h = g; g = f; f = e; e = (d + temp1) >>> 0;
+      d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
+    }
+    H[0]=(H[0]+a)>>>0; H[1]=(H[1]+b)>>>0; H[2]=(H[2]+c)>>>0; H[3]=(H[3]+d)>>>0;
+    H[4]=(H[4]+e)>>>0; H[5]=(H[5]+f)>>>0; H[6]=(H[6]+g)>>>0; H[7]=(H[7]+h)>>>0;
+  }
+  return Array.from(H).map(x => x.toString(16).padStart(8, "0")).join("");
+}
+
+const CUR_KEYS = [
+  ["lapis_free", "免费宝石"],
+  ["lapis_paid", "付费宝石"],
+  ["gil", "GIL"],
+  ["friend_point", "羁绊点数"]
+];
+const RANK_KEYS = [
+  ["level", "RANK"],
+  ["exp", "RANK EXP"],
+  ["nrg", "体力"]
+];
+const BANK_LABELS = [
+  ["XeRVw3s2", "持有 EXP（等级UP）"],
+  ["jWS57HG3", "LB 熟练度（LB等级UP）"],
+  ["LD4UJaf0", "强化HP 素材（罐）"],
+  ["ui34MYgo", "强化MP 素材（罐）"],
+  ["5sNq90o6", "强化攻击 素材（罐）"],
+  ["0xgsDY9E", "强化防御 素材（罐）"],
+  ["VSL4Wj9z", "强化魔力 素材（罐）"],
+  ["y7Z5AmhC", "强化精神 素材（罐）"],
+  ["h5s68EtJ", "强化HP 素材（门）"],
+  ["eu2DXK4I", "强化MP 素材（门）"],
+  ["8RUQtk4i", "强化攻击 素材（门）"],
+  ["8cj19yhb", "强化防御 素材（门）"],
+  ["rjK5oB1H", "强化魔力 素材（门）"],
+  ["16NCtrGw", "强化精神 素材（门）"]
+];
+
+let saveData = null;
+let saveBaseName = "exvius_save";
+let isZipMode = false;
+let currentZip = null;
+let manifestName = "";
+let manifestObj = null;
+let lastBlobUrl = null;
+let addItemTypeManual = false;
+let names = { items: {}, equipment: {}, materia: {}, units: {} };
+
+let lastItemHits = [];
+let lastUnitHits = [];
+let itemsShowAll = false;
+let lastItemsFilter = "";
+let rosterShowAll = false;
+let lastRosterFilter = "";
+
+// 自动加载同目录中文图鉴
+fetch("./names.json")
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(d => applyNames(d, "中文图鉴已自动加载，请打开存档开始修改"))
+  .catch(() => {
+    const badge = document.getElementById("dictBadge");
+    badge.textContent = "图鉴未加载";
+    badge.className = "badge warn";
+    document.getElementById("manualDictBtn").classList.remove("hidden");
+    setStatus("提示：本地直接打开时请点击上方「导入中文图鉴」（在线部署后会自动加载）。");
+  });
+
+function applyNames(d, msg) {
+  names = {
+    items: d.items || {},
+    equipment: d.equipment || {},
+    materia: d.materia || {},
+    units: d.units || {}
+  };
+  const total = Object.keys(names.items).length + Object.keys(names.equipment).length +
+                Object.keys(names.materia).length + Object.keys(names.units).length;
+  const badge = document.getElementById("dictBadge");
+  const gen = d._meta?.generated ? String(d._meta.generated).replace("T", " ") : "";
+  badge.textContent = `中文图鉴已就绪 (${total.toLocaleString()} 条)`;
+  badge.title = gen ? `图鉴生成时间：${gen}` : "";
+  badge.className = "badge ok";
+  document.getElementById("manualDictBtn").classList.add("hidden");
+  setStatus(msg);
+  if (saveData) { renderItems(); renderRoster(); }
+}
+
+function setStatus(msg) { document.getElementById("statusText").textContent = msg; }
+function markDirty(flag = true) {
+  document.getElementById("dirtyBadge").classList.toggle("hidden", !flag);
+}
+
+// 文件读取与拖拽
+const dropzone = document.getElementById("dropzone");
+dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("dragover"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  if (e.dataTransfer.files[0]) handleInputFile(e.dataTransfer.files[0]);
+});
+document.getElementById("saveFileInput").addEventListener("change", e => {
+  if (e.target.files[0]) handleInputFile(e.target.files[0]);
+  e.target.value = "";
+});
+document.getElementById("dictFileInput").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try { applyNames(JSON.parse(reader.result), "中文图鉴已导入"); }
+    catch { alert("图鉴文件读取失败，请确认选择了正确的图鉴文件。"); }
+  };
+  reader.readAsText(f, "utf-8");
+});
+
+async function handleInputFile(file) {
+  document.getElementById("fallbackLink").classList.add("hidden");
+  if (file.name.toLowerCase().endsWith(".zip")) {
+    await loadZipFile(file);
+  } else {
+    loadJsonFile(file);
+  }
+}
+
+async function loadZipFile(file) {
+  if (typeof JSZip === "undefined") {
+    alert("压缩包组件加载失败，请检查网络连接后刷新页面。");
+    return;
+  }
+  try {
+    currentZip = await JSZip.loadAsync(file);
+    manifestName = "";
+    manifestObj = null;
+
+    for (const [name, entry] of Object.entries(currentZip.files)) {
+      if (!entry.dir && name.endsWith(".json")) {
+        try {
+          const obj = JSON.parse(await entry.async("string"));
+          if (obj && obj.format === "exvius-save-1") {
+            manifestName = name;
+            manifestObj = obj;
+            break;
+          }
+        } catch {}
+      }
+    }
+
+    if (!manifestObj || !currentZip.file("campaign.json")) {
+      alert("这不是有效的游戏导出存档压缩包，请确认选择正确的文件。");
+      return;
+    }
+
+    saveData = JSON.parse(await currentZip.file("campaign.json").async("string"));
+    isZipMode = true;
+    saveBaseName = file.name.replace(/\.zip$/i, "");
+    onSaveLoaded(file.size);
+  } catch (err) {
+    alert("读取存档压缩包失败：" + err.message);
+  }
+}
+
+function loadJsonFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      if (!obj || typeof obj !== "object" || Array.isArray(obj)) throw new Error();
+      saveData = obj;
+      isZipMode = false;
+      currentZip = null;
+      manifestObj = null;
+      saveBaseName = file.name.replace(/\.json$/i, "");
+      onSaveLoaded(file.size);
+    } catch {
+      alert("读取存档失败，请确认选择了有效的存档文件。");
+    }
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+function onSaveLoaded(sizeBytes) {
+  document.getElementById("dropzone").classList.add("hidden");
+  document.getElementById("editorArea").classList.remove("hidden");
+  document.getElementById("exportBtn").classList.remove("hidden");
+  document.getElementById("fileMeta").textContent = `存档大小 ${(sizeBytes / 1024).toFixed(1)} KB`;
+  itemsShowAll = false;
+  rosterShowAll = false;
+  markDirty(false);
+  renderAll();
+  setStatus("存档已加载，修改完成后点击右上角「保存并导出存档」即可。");
+}
+
+function getPath(obj, path, def = 0) {
+  let cur = obj;
+  for (const k of path) {
+    if (cur == null || typeof cur !== "object") return def;
+    cur = cur[k];
+  }
+  return cur ?? def;
+}
+function setPath(obj, path, val) {
+  let cur = obj;
+  for (let i = 0; i < path.length - 1; i++) {
+    const k = path[i];
+    if (!cur[k] || typeof cur[k] !== "object") cur[k] = {};
+    cur = cur[k];
+  }
+  cur[path[path.length - 1]] = val;
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("hidden", p.id !== "tab-" + name));
+  if (name === "raw") refreshRawJson();
+}
+
+function renderAll() {
+  renderCurrencies();
+  renderBank();
+  renderItems();
+  renderRoster();
+  refreshRawJson();
+}
+
+// 1. 货币与等级
+function renderCurrencies() {
+  document.getElementById("curGrid").innerHTML = CUR_KEYS.map(([k, label]) => `
+    <div class="field">
+      <label>${label}</label>
+      <input type="number" id="cur_${k}" value="${getPath(saveData, ["currencies", k], 0)}"
+             onchange="setPath(saveData, ['currencies', '${k}'], Number(this.value)||0); markDirty();">
+    </div>`).join("");
+
+  document.getElementById("rankGrid").innerHTML = RANK_KEYS.map(([k, label]) => `
+    <div class="field">
+      <label>${label}</label>
+      <input type="number" id="rank_${k}" value="${getPath(saveData, ["rank", k], 0)}"
+             onchange="setPath(saveData, ['rank', '${k}'], Number(this.value)||0); markDirty();">
+    </div>`).join("");
+}
+function quickSetAllCur(val) {
+  for (const [k] of CUR_KEYS) {
+    setPath(saveData, ["currencies", k], val);
+    const el = document.getElementById("cur_" + k);
+    if (el) el.value = val;
+  }
+  markDirty();
+  setStatus(`已将全部基础货币设为 ${val.toLocaleString()}`);
+}
+
+// 2. 兵员强化池
+function renderBank() {
+  document.getElementById("bankGrid").innerHTML = BANK_LABELS.map(([tok, label]) => `
+    <div class="field">
+      <label>${label}</label>
+      <input type="number" id="bank_${tok}" value="${getPath(saveData, ["exvius_unit_points", "banks", "0", tok], 0)}"
+             onchange="setPath(saveData, ['exvius_unit_points', 'banks', '0', '${tok}'], Number(this.value)||0); markDirty();">
+    </div>`).join("");
+}
+function quickSetBank(val) {
+  for (const [tok] of BANK_LABELS) {
+    setPath(saveData, ["exvius_unit_points", "banks", "0", tok], val);
+    const el = document.getElementById("bank_" + tok);
+    if (el) el.value = val;
+  }
+  markDirty();
+  setStatus(val > 0 ? `已将通用持有素材全部设为 ${val.toLocaleString()}` : "已清空通用持有素材");
+}
+
+// 搜索相关度评分
+function matchScore(name, id, q) {
+  const nl = name.toLowerCase();
+  if (nl === q || id === q) return 0;
+  if (nl.startsWith(q) || id.startsWith(q)) return 1;
+  return 2;
+}
+
+// 3. 道具与装备
+function lookupItemName(id, itemType) {
+  const s = String(id);
+  if (itemType === 22) return names.materia[s] || names.items[s] || `未知能力 #${s}`;
+  return names.items[s] || names.materia[s] || `未知道具 #${s}`;
+}
+function lookupEquipName(id) {
+  const s = String(id);
+  return names.equipment[s] || names.items[s] || `未知装备 #${s}`;
+}
+
+function renderItems() {
+  const needle = document.getElementById("filterItems").value.trim().toLowerCase();
+  if (needle !== lastItemsFilter) { itemsShowAll = false; lastItemsFilter = needle; }
+
+  const rows = [];
+  const items = saveData?.inventory?.items || [];
+  items.forEach((e, idx) => {
+    const id = e.item_id ?? 0, type = e.item_type ?? 20, count = e.count ?? 0;
+    const typeLabel = type === 22 ? "能力" : "道具";
+    const name = lookupItemName(id, type);
+    if (!needle || `${id} ${name} ${typeLabel}`.toLowerCase().includes(needle)) {
+      rows.push({ sec: 0, idx, typeLabel, id, name, count });
+    }
+  });
+  const eq = saveData?.inventory?.equipment || [];
+  eq.forEach((e, idx) => {
+    const id = e.item_id ?? 0, count = e.count ?? 0;
+    const name = lookupEquipName(id);
+    if (!needle || `${id} ${name} 装备`.toLowerCase().includes(needle)) {
+      rows.push({ sec: 1, idx, typeLabel: "装备", id, name, count });
+    }
+  });
+
+  const visibleRows = itemsShowAll ? rows : rows.slice(0, 500);
+  document.getElementById("itemsCount").innerHTML = !itemsShowAll && rows.length > 500
+    ? `共 ${rows.length} 项（当前显示前 500 项，<a href="javascript:void(0)" style="color:var(--accent);" onclick="itemsShowAll=true;renderItems()">点击显示全部</a>）`
+    : `共 ${rows.length} 项`;
+
+  document.getElementById("itemsBody").innerHTML = visibleRows.map(r => `
+    <tr>
+      <td><span class="badge">${r.typeLabel}</span></td>
+      <td class="muted" style="font-family:Consolas,monospace;">${r.id}</td>
+      <td>${escapeHtml(r.name)}</td>
+      <td><input type="number" value="${r.count}" min="0" style="width:110px;" onchange="updateItemCount(${r.sec}, ${r.idx}, this.value)"></td>
+      <td><button class="sm danger" onclick="deleteItem(${r.sec}, ${r.idx})">删除</button></td>
+    </tr>`).join("");
+}
+function updateItemCount(sec, idx, val) {
+  const arr = sec === 1 ? saveData.inventory.equipment : saveData.inventory.items;
+  arr[idx].count = Math.max(0, Number(val) || 0);
+  markDirty();
+}
+function deleteItem(sec, idx) {
+  const arr = sec === 1 ? saveData.inventory.equipment : saveData.inventory.items;
+  arr.splice(idx, 1);
+  markDirty();
+  renderItems();
+}
+
+function openAddItemModal() {
+  addItemTypeManual = false;
+  lastItemHits = [];
+  document.getElementById("addItemSearch").value = "";
+  document.getElementById("addItemHits").classList.add("hidden");
+  document.getElementById("pickedItemBanner").classList.add("hidden");
+  document.getElementById("addItemId").value = "";
+  document.getElementById("addItemCount").value = "1";
+  document.getElementById("addItemSection").value = "0";
+  document.getElementById("addItemType").value = "20";
+  document.getElementById("modalAddItem").classList.remove("hidden");
+  setTimeout(() => document.getElementById("addItemSearch").focus(), 50);
+}
+function setAddItemCount(n) {
+  document.getElementById("addItemCount").value = String(n);
+}
+function searchItemDict() {
+  const q = document.getElementById("addItemSearch").value.trim().toLowerCase();
+  const box = document.getElementById("addItemHits");
+  if (!q) { box.classList.add("hidden"); return; }
+
+  const hits = [];
+  const scan = (map, kind, label) => {
+    for (const [id, name] of Object.entries(map)) {
+      if (name.toLowerCase().includes(q) || id.includes(q)) {
+        hits.push({ id, name, kind, label, score: matchScore(name, id, q) });
+      }
+    }
+  };
+  scan(names.items, "item", "道具");
+  scan(names.materia, "materia", "能力");
+  scan(names.equipment, "equipment", "装备");
+
+  hits.sort((a, b) => a.score - b.score || a.name.length - b.name.length || b.id.localeCompare(a.id));
+  lastItemHits = hits;
+  renderItemHits(false);
+}
+function renderItemHits(showAll) {
+  const box = document.getElementById("addItemHits");
+  const q = document.getElementById("addItemSearch").value.trim();
+  const isNumericId = /^\d+$/.test(q) && Number(q) > 0;
+  const hasExactId = isNumericId && lastItemHits.some(h => h.id === q);
+
+  if (!lastItemHits.length && !isNumericId) {
+    box.innerHTML = `<div class="hit-item muted">未找到相关物品</div>`;
+    box.classList.remove("hidden");
+    return;
+  }
+  const list = showAll ? lastItemHits : lastItemHits.slice(0, 80);
+  let html = list.map(h => `
+    <div class="hit-item" onclick="pickItemHit('${h.id}','${h.kind}','${escapeAttr(h.name)}','${h.label}')">
+      <span>${escapeHtml(h.name)}</span>
+      <span class="badge">${h.label} · ${h.id}</span>
+    </div>`).join("");
+
+  if (isNumericId && !hasExactId) {
+    html += `<div class="hit-item" onclick="pickItemHit('${q}','item','未收录物品 #${q}','道具')">
+      <span>直接使用该物品 ID：<b>${q}</b>（可在下方高级选项调整分类）</span>
+      <span class="badge">自定义 ID</span>
+    </div>`;
+  }
+
+  if (!showAll && lastItemHits.length > 80) {
+    html += `<div class="hit-item" style="justify-content:center; color:var(--accent); font-weight:600;" onclick="renderItemHits(true)">
+      还有 ${lastItemHits.length - 80} 条匹配结果，点击显示全部
+    </div>`;
+  }
+  box.innerHTML = html;
+  box.classList.remove("hidden");
+}
+function pickItemHit(id, kind, name, label) {
+  addItemTypeManual = false;
+  document.getElementById("addItemId").value = id;
+  if (kind === "equipment") {
+    document.getElementById("addItemSection").value = "1";
+  } else {
+    document.getElementById("addItemSection").value = "0";
+    document.getElementById("addItemType").value = kind === "materia" ? "22" : "20";
+  }
+  const banner = document.getElementById("pickedItemBanner");
+  banner.textContent = `已选择：${name}（${label}）`;
+  banner.classList.remove("hidden");
+  document.getElementById("addItemHits").classList.add("hidden");
+}
+function submitAddItem() {
+  const sec = Number(document.getElementById("addItemSection").value);
+  const manualType = Number(document.getElementById("addItemType").value) || 20;
+  const id = Number(document.getElementById("addItemId").value);
+  const count = Number(document.getElementById("addItemCount").value);
+  if (!id || id <= 0) return alert("请先搜索并点击选择要添加的物品");
+  if (count <= 0) return alert("添加数量必须大于 0");
+
+  if (!saveData.inventory) saveData.inventory = {};
+  const key = sec === 1 ? "equipment" : "items";
+  if (!Array.isArray(saveData.inventory[key])) saveData.inventory[key] = [];
+  const arr = saveData.inventory[key];
+
+  let existing = null;
+  if (sec === 1) {
+    existing = arr.find(e => e.item_id === id);
+  } else if (addItemTypeManual) {
+    existing = arr.find(e => e.item_id === id && e.item_type === manualType);
+  } else {
+    existing = arr.find(e => e.item_id === id);
+  }
+
+  if (existing) {
+    existing.count = (existing.count || 0) + count;
+  } else {
+    arr.push(sec === 1 ? { item_id: id, count } : { item_type: manualType, item_id: id, count });
+  }
+  markDirty();
+  closeModal("modalAddItem");
+  renderItems();
+  const displayName = sec === 1 ? lookupEquipName(id) : lookupItemName(id, existing ? existing.item_type : manualType);
+  setStatus(`已添加：${displayName} × ${count}`);
+}
+
+// 4. 兵员列表
+function nextInstanceId(roster) {
+  let max = 0;
+  for (const u of roster) {
+    const n = Number(u.instance_id) || 0;
+    if (n > max) max = n;
+  }
+  return max + 1;
+}
+function renderRoster() {
+  const needle = document.getElementById("filterRoster").value.trim().toLowerCase();
+  if (needle !== lastRosterFilter) { rosterShowAll = false; lastRosterFilter = needle; }
+
+  const roster = saveData?.roster || [];
+  const rows = [];
+  roster.forEach((u, idx) => {
+    const inst = String(u.instance_id ?? "");
+    const master = String(u.master_id ?? "");
+    const name = names.units[master] || `未知兵员 #${master}`;
+    if (!needle || inst.includes(needle) || master.includes(needle) || name.toLowerCase().includes(needle)) {
+      rows.push({ idx, master, name, lv: u.level ?? 0, exp: u.exp ?? 0, lbLv: u.lb_level ?? 1, exLv: u.nv_ex_level ?? 0 });
+    }
+  });
+
+  const visibleRows = rosterShowAll ? rows : rows.slice(0, 500);
+  document.getElementById("rosterCount").innerHTML = !rosterShowAll && rows.length > 500
+    ? `共 ${rows.length} / ${roster.length} 名兵员（当前显示前 500 名，<a href="javascript:void(0)" style="color:var(--accent);" onclick="rosterShowAll=true;renderRoster()">点击显示全部</a>）`
+    : `共 ${rows.length} / ${roster.length} 名兵员`;
+
+  document.getElementById("rosterBody").innerHTML = visibleRows.map(r => `
+    <tr>
+      <td>${escapeHtml(r.name)}</td>
+      <td class="muted" style="font-family:Consolas,monospace;">${escapeHtml(r.master)}</td>
+      <td>Lv.${r.lv}</td>
+      <td class="muted">${r.exp.toLocaleString()}</td>
+      <td>Lv.${r.lbLv}</td>
+      <td>EX+${r.exLv}</td>
+      <td>
+        <button class="sm" onclick="openEditUnit(${r.idx})">修改</button>
+        <button class="sm" onclick="cloneUnit(${r.idx})">复制</button>
+      </td>
+    </tr>`).join("");
+}
+
+function openAddUnitModal() {
+  lastUnitHits = [];
+  document.getElementById("addUnitSearch").value = "";
+  document.getElementById("addUnitHits").classList.add("hidden");
+  document.getElementById("pickedUnitBanner").classList.add("hidden");
+  document.getElementById("addUnitMaster").value = "";
+  document.getElementById("addUnitLevel").value = "1";
+  document.getElementById("addUnitExp").value = "0";
+  document.getElementById("addUnitFav").checked = true;
+  document.getElementById("modalAddUnit").classList.remove("hidden");
+  setTimeout(() => document.getElementById("addUnitSearch").focus(), 50);
+}
+function searchUnitDict() {
+  const q = document.getElementById("addUnitSearch").value.trim().toLowerCase();
+  const box = document.getElementById("addUnitHits");
+  if (!q) { box.classList.add("hidden"); return; }
+
+  const hits = [];
+  for (const [id, name] of Object.entries(names.units)) {
+    if (name.toLowerCase().includes(q) || id.includes(q)) {
+      hits.push({ id, name, star: id.slice(-1), score: matchScore(name, id, q) });
+    }
+  }
+  hits.sort((a, b) => a.score - b.score || a.name.length - b.name.length || b.id.localeCompare(a.id));
+  lastUnitHits = hits;
+  renderUnitHits(false);
+}
+function renderUnitHits(showAll) {
+  const box = document.getElementById("addUnitHits");
+  const q = document.getElementById("addUnitSearch").value.trim();
+  const isNumericId = /^\d+$/.test(q) && Number(q) > 0;
+  const hasExactId = isNumericId && lastUnitHits.some(h => h.id === q);
+
+  if (!lastUnitHits.length && !isNumericId) {
+    box.innerHTML = `<div class="hit-item muted">未找到相关兵员</div>`;
+    box.classList.remove("hidden");
+    return;
+  }
+  const list = showAll ? lastUnitHits : lastUnitHits.slice(0, 80);
+  let html = list.map(h => `
+    <div class="hit-item" onclick="pickUnitHit('${h.id}','${escapeAttr(h.name)} (${h.star}★)')">
+      <span>${escapeHtml(h.name)}</span>
+      <span class="badge">${h.star}★ · ${h.id}</span>
+    </div>`).join("");
+
+  if (isNumericId && !hasExactId) {
+    html += `<div class="hit-item" onclick="pickUnitHit('${q}','未收录兵员 #${q}')">
+      <span>直接使用该兵员 ID：<b>${q}</b></span>
+      <span class="badge">自定义 ID</span>
+    </div>`;
+  }
+
+  if (!showAll && lastUnitHits.length > 80) {
+    html += `<div class="hit-item" style="justify-content:center; color:var(--accent); font-weight:600;" onclick="renderUnitHits(true)">
+      还有 ${lastUnitHits.length - 80} 条匹配结果，点击显示全部
+    </div>`;
+  }
+  box.innerHTML = html;
+  box.classList.remove("hidden");
+}
+function pickUnitHit(id, name) {
+  document.getElementById("addUnitMaster").value = id;
+  const banner = document.getElementById("pickedUnitBanner");
+  banner.textContent = `已选择兵员：${name}`;
+  banner.classList.remove("hidden");
+  document.getElementById("addUnitHits").classList.add("hidden");
+}
+function defaultAffinityForUnit(masterId) {
+  const id = String(masterId);
+  // 超级信赖度莫古利 (906000xxx) 自动设为 100% 超信
+  if (id.startsWith("906000")) {
+    return [["", "1000"], ["", "70:0:0:1000:0:0:0"]];
+  }
+  // 信赖度莫古利 (904000xxx，排除原晶莫古利 904000115) 自动设为 100% 信赖
+  if (id.startsWith("904000") && id !== "904000115") {
+    return [["1000", ""], ["70:0:0:1000:0:0:0", ""]];
+  }
+  return [["", ""], ["", ""]];
+}
+function submitAddUnit() {
+  const master = Number(document.getElementById("addUnitMaster").value);
+  const level = Number(document.getElementById("addUnitLevel").value) || 1;
+  const exp = Number(document.getElementById("addUnitExp").value) || 0;
+  const fav = document.getElementById("addUnitFav").checked;
+  if (!master || master <= 0) return alert("请先搜索并点击选择要新增的兵员");
+  if (!Array.isArray(saveData.roster)) saveData.roster = [];
+  const tpl = saveData.roster[0] ? JSON.parse(JSON.stringify(saveData.roster[0])) : {};
+  const inst = nextInstanceId(saveData.roster);
+  const [affinityPoints, affinityInfo] = defaultAffinityForUnit(master);
+  Object.assign(tpl, {
+    instance_id: String(inst),
+    master_id: String(master),
+    level, exp, total_exp: 0, lb_exp: 0, nv_ex_level: 0,
+    guest: 0, storage_state: 0, favourite: fav ? 1 : 0,
+    granted_rarity: null, first_get_unit_id: null, lb_level: 1,
+    equipment: {"1":"0","2":"0","3":"0","4":"0","5":"0","6":"0"},
+    materia: ["0"], vision_card: "",
+    affinity_points: affinityPoints, affinity_info: affinityInfo, skin_id: 0
+  });
+  saveData.roster.push(tpl);
+  if (saveData.counts) saveData.counts.unit = saveData.roster.length;
+  markDirty();
+  closeModal("modalAddUnit");
+  renderRoster();
+  setStatus(`已新增兵员：${names.units[String(master)] || master}`);
+}
+
+function openEditUnit(idx) {
+  const u = saveData.roster[idx];
+  const name = names.units[String(u.master_id)] || `兵员 ${u.master_id}`;
+  document.getElementById("editUnitTitle").textContent = `修改兵员：${name}`;
+  document.getElementById("editUnitIdx").value = idx;
+  document.getElementById("editUnitLevel").value = u.level ?? 1;
+  document.getElementById("editUnitExp").value = u.exp ?? 0;
+  document.getElementById("editUnitLbLv").value = u.lb_level ?? 1;
+  document.getElementById("editUnitLbExp").value = u.lb_exp ?? 0;
+  document.getElementById("editUnitExLv").value = u.nv_ex_level ?? 0;
+  document.getElementById("modalEditUnit").classList.remove("hidden");
+}
+function submitEditUnit() {
+  const idx = Number(document.getElementById("editUnitIdx").value);
+  const u = saveData.roster[idx];
+  u.level = Math.max(1, Number(document.getElementById("editUnitLevel").value) || 1);
+  u.exp = Math.max(0, Number(document.getElementById("editUnitExp").value) || 0);
+  u.lb_level = Math.max(1, Number(document.getElementById("editUnitLbLv").value) || 1);
+  u.lb_exp = Math.max(0, Number(document.getElementById("editUnitLbExp").value) || 0);
+  u.nv_ex_level = Math.max(0, Number(document.getElementById("editUnitExLv").value) || 0);
+  markDirty();
+  closeModal("modalEditUnit");
+  renderRoster();
+  setStatus(`已更新兵员：${names.units[String(u.master_id)] || u.master_id}`);
+}
+function cloneUnit(idx) {
+  const copyGear = confirm("是否连同装备、能力与幻兵卡一起复制？\n（点「取消」仅复制兵员本身并卸下装备，推荐）");
+  const clone = JSON.parse(JSON.stringify(saveData.roster[idx]));
+  const inst = nextInstanceId(saveData.roster);
+  clone.instance_id = String(inst);
+  clone.guest = 0;
+  clone.storage_state = 0;
+  if (!copyGear) {
+    clone.equipment = {"1":"0","2":"0","3":"0","4":"0","5":"0","6":"0"};
+    clone.materia = ["0"];
+    clone.vision_card = "";
+    clone.skin_id = 0;
+  }
+  saveData.roster.push(clone);
+  if (saveData.counts) saveData.counts.unit = saveData.roster.length;
+  markDirty();
+  renderRoster();
+  setStatus(`已复制兵员：${names.units[String(clone.master_id)] || clone.master_id}`);
+}
+
+// 5. 高级数据
+function refreshRawJson() {
+  if (saveData) document.getElementById("rawTextarea").value = JSON.stringify(saveData, null, 2);
+}
+function applyRawJson() {
+  try {
+    const parsed = JSON.parse(document.getElementById("rawTextarea").value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+    saveData = parsed;
+    markDirty();
+    renderAll();
+    setStatus("高级数据已应用");
+  } catch {
+    alert("数据格式有误，请检查括号与逗号是否匹配。");
+  }
+}
+
+// 导出存档
+async function exportSave() {
+  if (!saveData) return;
+  const fallbackLink = document.getElementById("fallbackLink");
+
+  if (isZipMode && currentZip && manifestObj) {
+    setStatus("正在重新计算校验并打包存档...");
+    const localDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
+    currentZip.file("campaign.json", JSON.stringify(saveData, null, 1), { date: localDate });
+
+    const entries = manifestObj.entries || {};
+    for (const [entryPath, meta] of Object.entries(entries)) {
+      if (meta === null) continue;
+      const zFile = currentZip.file(entryPath);
+      if (!zFile) continue;
+      const bytes = await zFile.async("uint8array");
+      meta.length = bytes.length;
+      meta.sha256 = sha256Hex(bytes);
+    }
+
+    currentZip.file(manifestName, JSON.stringify(manifestObj), { date: localDate });
+    const blob = await currentZip.generateAsync({ type: "blob", compression: "DEFLATE" });
+
+    triggerDownload(blob, `${saveBaseName}_edited.zip`, fallbackLink);
+    setStatus("存档已修复校验并导出，可直接导回游戏使用！");
+  } else {
+    const blob = new Blob([JSON.stringify(saveData, null, 2) + "\n"], { type: "application/json" });
+    triggerDownload(blob, `${saveBaseName}_edited.json`, fallbackLink);
+    setStatus("存档已导出！");
+  }
+  markDirty(false);
+}
+
+function triggerDownload(blob, filename, fallbackLink) {
+  if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+  lastBlobUrl = URL.createObjectURL(blob);
+  fallbackLink.href = lastBlobUrl;
+  fallbackLink.download = filename;
+  fallbackLink.classList.remove("hidden");
+
+  const a = document.createElement("a");
+  a.href = lastBlobUrl;
+  a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function escapeAttr(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+</script>
+</body>
+</html>
