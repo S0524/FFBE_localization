@@ -146,10 +146,10 @@ cd d:\下载\FFBE_localization\scripts
    - `patch_equipment_enhancement()` 中 54 个铁城装备强化网页的静态模板（`_EXACT_HTML_PHRASES`、`_STATIC_REWARDS`、`_MONTH_ZH`、`_STAT_WORDS` 及 `<html lang="zh-Hant">`）当前为繁中硬编码，移植时需翻译为目标语言或选择跳过 HTML 替换。
 5. **可选附属项**：[stat_zh_coverage.py](scripts/stat_zh_coverage.py) 的 `TABLE_META` 分类说明、[save_editor_web/index.html](save_editor_web/index.html) 网页界面，以及 [patch_apk.py](scripts/patch_apk.py) 输出文件名后缀 `-zh-patched.apk` 可按需本地化。
 
-### 2. 移植国际服未收录语种 / 日服（`FFBE_JP`）
+### 2. 移植国际服未收录语种 / 日服（`ffbe_jp_contentserver_archive.rar`）
 
 - **民间二次翻译语言（如简体中文、俄语、葡萄牙语等）**：可直接复用 `make_zh_patch.py` 解码出的 `work/text_decoded/*.ndjson`、`KEY^TEXT` 明文表与 `_sg.txt` 文本管道进行翻译回填（例如繁中转简中或基于英文翻译）。若目标语言使用非拉丁 / 非 CJK 字符集，需实机验证客户端内置字体是否包含对应字形。
-- **日服原始档案（`FFBE_JP`）**：日服数据表的 token、单列结构及资源命名与国际服 `exvius-offline` 不一致，无法直接按列对调，需额外构建跨服 ID 映射关系。
+- **日服原始档案（`ffbe_jp_contentserver_archive.rar`）**：日服数据表的 token、单列结构及资源命名与国际服 `exvius-offline` 不一致，无法直接按列对调，需额外构建跨服 ID 映射关系。
 
 ---
 

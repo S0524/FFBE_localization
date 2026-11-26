@@ -148,10 +148,10 @@ Besides `en` and `zh`, both `ffbe_gl_contentserver_archive.rar` and `game-assets
    - In `patch_equipment_enhancement()`, translate or skip the hardcoded Traditional Chinese templates (`_EXACT_HTML_PHRASES`, `_STATIC_REWARDS`, `_MONTH_ZH`, `_STAT_WORDS`, and `<html lang="zh-Hant">`) used for the 54 Item World HTML pages.
 5. **Optional**: Update `TABLE_META` descriptions in [stat_zh_coverage.py](scripts/stat_zh_coverage.py), the UI text in [save_editor_web/index.html](save_editor_web/index.html), and the `-zh-patched.apk` filename suffix in [patch_apk.py](scripts/patch_apk.py).
 
-### 2. Custom Fan Translations & Japanese (`FFBE_JP`)
+### 2. Custom Fan Translations & Japanese (`ffbe_jp_contentserver_archive.rar`)
 
 - **New / Non-GL Languages (e.g. Simplified Chinese, Russian, Portuguese)**: You can reuse the decoded `work/text_decoded/*.ndjson`, `KEY^TEXT` `.dat` tables, and `_sg.txt` pipeline by injecting your own translation dictionary. For non-Latin / non-CJK scripts, test on-device to confirm the client's bundled fonts include the required glyphs.
-- **Japanese Archive (`FFBE_JP`)**: The JP archive uses different table tokens, single-column layouts, and asset naming compared to the GL-based `exvius-offline` client, so direct column swapping does not apply and cross-server ID mapping is required.
+- **Japanese Archive (`ffbe_jp_contentserver_archive.rar`)**: The JP archive uses different table tokens, single-column layouts, and asset naming compared to the GL-based `exvius-offline` client, so direct column swapping does not apply and cross-server ID mapping is required.
 
 ---
 
