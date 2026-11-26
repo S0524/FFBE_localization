@@ -6,15 +6,15 @@
 
 ---
 <p align="center">
-  <img width="720" alt="预览" src="https://github.com/user-attachments/assets/0d9cba34-3fc5-4028-8039-da6fc9521fd5" />
+  <img width="750" alt="预览" src="https://github.com/user-attachments/assets/0d9cba34-3fc5-4028-8039-da6fc9521fd5" />
 </p>
 
 <p align="center">
-  <img width="170" alt="截图1" src="https://github.com/user-attachments/assets/93684a86-fde2-401f-91d7-088a519b36b9" />
-  <img width="170" alt="截图2" src="https://github.com/user-attachments/assets/4ce88992-5636-4ac6-9b01-34d090f8b3a4" />
-  <img width="170" alt="截图3" src="https://github.com/user-attachments/assets/fce1c74d-930a-4bfc-92be-914f3e240076" />
-  <img width="170" alt="截图4" src="https://github.com/user-attachments/assets/596fe12d-8c98-42df-bb9f-24c8205b0a5e" />
-  <img width="170" alt="截图5" src="https://github.com/user-attachments/assets/ecf80079-76f9-4e21-a0f4-cf6d54303b97" />
+  <img width="150" alt="截图1" src="https://github.com/user-attachments/assets/93684a86-fde2-401f-91d7-088a519b36b9" />
+  <img width="150" alt="截图2" src="https://github.com/user-attachments/assets/4ce88992-5636-4ac6-9b01-34d090f8b3a4" />
+  <img width="150" alt="截图3" src="https://github.com/user-attachments/assets/fce1c74d-930a-4bfc-92be-914f3e240076" />
+  <img width="150" alt="截图4" src="https://github.com/user-attachments/assets/596fe12d-8c98-42df-bb9f-24c8205b0a5e" />
+  <img width="150" alt="截图5" src="https://github.com/user-attachments/assets/ecf80079-76f9-4e21-a0f4-cf6d54303b97" />
 </p>
 
 ## 目录结构说明
