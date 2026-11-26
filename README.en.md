@@ -86,7 +86,7 @@ Download the latest `latest.json` from either official `exvius-offline` reposito
 #### (2) Prepare the Archived GL Assets (`source/FFBE_GL.zip`)
 
 The historical Global localization assets come from the Internet Archive preservation dump:  
-`https://archive.org/download/ffbe-eos-contentserver-archive/ffbe_gl_contentserver_archive.rar`
+<https://archive.org/download/ffbe-eos-contentserver-archive/ffbe_gl_contentserver_archive.rar>
 
 Because the downloaded file is a **`.rar` archive with nested wrapper directories**, and [extract_archive.py](scripts/extract_archive.py) uses Python's built-in `zipfile` module (which cannot read `.rar` directly), prepare `source/FFBE_GL.zip` as follows:
 

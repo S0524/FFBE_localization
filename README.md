@@ -84,7 +84,7 @@ FFBE_localization/
 #### (2) 准备历史国际服档案 `source/FFBE_GL.zip`
 
 本项目使用的历史多语言语料来自互联网档案馆（Internet Archive）的国际服封存包：  
-`https://archive.org/download/ffbe-eos-contentserver-archive/ffbe_gl_contentserver_archive.rar`
+<https://archive.org/download/ffbe-eos-contentserver-archive/ffbe_gl_contentserver_archive.rar>
 
 该原始压缩包为 **`.rar` 格式且带有多层外层目录嵌套**。由于构建脚本（[extract_archive.py](scripts/extract_archive.py)）通过 Python 标准库 `zipfile` 读取压缩包，无法直接解析 `.rar`，请按以下步骤准备 `source/FFBE_GL.zip`：
 
