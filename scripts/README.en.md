@@ -120,4 +120,3 @@ python patch_apk.py --help
 - Treat **`source/FFBE_GL.zip` and `release/`** as read-only base assets; do not manually delete or alter official packs inside them.
 - Keep **`ffbe_zh.keystore`** safe once generated. Changing keystores produces a different APK signature, which prevents over-the-top upgrades on Android (forcing an uninstall that can wipe local save data).
 - To override the default keystore password, set the `FFBE_KS_PASS` environment variable or pass `--ks-pass` to `patch_apk.py`.
-- `source/FFBE_JP.zip` (if present) is strictly an optional reference archive and is **never read by any build script**; you may delete it to save disk space.

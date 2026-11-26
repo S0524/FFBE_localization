@@ -120,4 +120,3 @@ python patch_apk.py --help
 - **`source/FFBE_GL.zip` 与 `release/`** 请视为只读底包资产，不要手动删改其中的原版分包。
 - **`ffbe_zh.keystore`** 请勿丢失或随意更换，否则新打包出来的 APK 与旧版本签名不一致，手机上将无法直接覆盖安装（必须先卸载，容易丢失游戏进度）。
 - 若需将密码从脚本默认值改掉，可在执行 `patch_apk.py` 前设置环境变量 `FFBE_KS_PASS` 或传 `--ks-pass`。
-- 当前 `source/FFBE_JP.zip` 仅作可选原始资料保存，**构建脚本均不会读取该文件**；如本地磁盘空间紧张，可按需自行删除以释放空间。
